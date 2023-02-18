@@ -61,5 +61,42 @@ class DateTimeTests {
 			System.out.println(current.atZone(ZoneId.of(zone)));
 		});
 	}
+	
+	@Test
+	void getNumberTest() {
+		assertEquals(0, getNumber(DayOfWeek.MONDAY, DayOfWeek.MONDAY));
+		assertEquals(1, getNumber(DayOfWeek.TUESDAY, DayOfWeek.MONDAY));
+
+		assertEquals(6, getNumber(DayOfWeek.MONDAY, DayOfWeek.SUNDAY));
+		assertEquals(0, getNumber(DayOfWeek.TUESDAY, DayOfWeek.SUNDAY));
+		assertEquals(5, getNumber(DayOfWeek.SUNDAY, DayOfWeek.SUNDAY));
+		
+		assertEquals(1, getNumber(DayOfWeek.MONDAY, DayOfWeek.TUESDAY));
+		assertEquals(2, getNumber(DayOfWeek.TUESDAY, DayOfWeek.TUESDAY));
+		assertEquals(3, getNumber(DayOfWeek.WEDNESDAY, DayOfWeek.TUESDAY));
+		
+		
+		assertEquals(DayOfWeek.MONDAY, map(DayOfWeek.MONDAY, DayOfWeek.MONDAY));
+		assertEquals(DayOfWeek.TUESDAY, map(DayOfWeek.TUESDAY, DayOfWeek.MONDAY));
+		
+		assertEquals(DayOfWeek.SUNDAY, map(DayOfWeek.MONDAY, DayOfWeek.SUNDAY));
+		assertEquals(DayOfWeek.MONDAY, map(DayOfWeek.TUESDAY, DayOfWeek.SUNDAY));
+		assertEquals(DayOfWeek.SATURDAY, map(DayOfWeek.SUNDAY, DayOfWeek.SUNDAY));
+		
+		assertEquals(DayOfWeek.TUESDAY, map(DayOfWeek.MONDAY, DayOfWeek.TUESDAY));
+		assertEquals(DayOfWeek.WEDNESDAY, map(DayOfWeek.TUESDAY, DayOfWeek.TUESDAY));		
+		assertEquals(DayOfWeek.THURSDAY, map(DayOfWeek.WEDNESDAY, DayOfWeek.TUESDAY));
+	}
+	
+	private DayOfWeek map(DayOfWeek day, DayOfWeek startDay) {
+		return DayOfWeek.of(getNumber(day, startDay) + 1);
+	}
+
+	private int getNumber(DayOfWeek day, DayOfWeek startDay) {
+//		int diff = startDay.getValue() - DayOfWeek.MONDAY.getValue();
+//		int shiftedValue = (day.getValue() + diff - 1) % 7;
+		int shiftedValue = (day.getValue() + startDay.getValue() - 2) % 7;
+		return shiftedValue;
+	}
 
 }

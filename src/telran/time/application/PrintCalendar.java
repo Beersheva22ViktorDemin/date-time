@@ -13,27 +13,34 @@ public class PrintCalendar {
 	private static final String LANGUAGE_TAG = "en";
 	private static final int YEAR_OFFSET = 10;
 	private static final int WIDTH_FIELD = 4;
+	private static final DayOfWeek DEFAULT_FIRST_DAY_OF_WEEK = DayOfWeek.MONDAY; 
 	private static Locale locale = Locale.forLanguageTag(LANGUAGE_TAG);
+	
 
 	public static void main(String[] args)  {
 		try {
-			int monthYear[] = getMonthYear(args);
-			printCalendar(monthYear[0], monthYear[1]);
+			int parsed[] = getParsedArguments(args);
+			printCalendar(parsed[0], parsed[1], parsed[2]);
 		} catch (Exception e) {
 			System.out.println(e.getMessage());
 		}
 
 	}
 
-	private static void printCalendar(int month, int year) {
+	private static void printCalendar(int month, int year, int firstDayOfWeek) {
+		int daysShift = getDaysShift(firstDayOfWeek);
 		printTitle(month, year);
-		printWeekDays();
-		printDates(month, year);
+		printWeekDays(daysShift);
+		printDates(month, year, daysShift);
 		
 	}
 
-	private static void printDates(int month, int year) {
-		int weekDayNumber = getFirstDay(month, year);
+	private static int getDaysShift(int firstDayOfWeek) {
+		return firstDayOfWeek - 1;
+	}
+
+	private static void printDates(int month, int year, int daysShift) {
+		int weekDayNumber = getFirstDay(month, year, daysShift);
 		int offset = getOffset(weekDayNumber);
 		
 		int nDays = YearMonth.of(year, month).lengthOfMonth();
@@ -45,7 +52,6 @@ public class PrintCalendar {
 				weekDayNumber = 1;
 			}
 		}
-		
 	}
 
 	private static int getOffset(int weekDayNumber) {
@@ -53,35 +59,51 @@ public class PrintCalendar {
 		return (weekDayNumber - 1) * WIDTH_FIELD;
 	}
 
-	private static int getFirstDay(int month, int year) {
+	private static int getFirstDay(int month, int year, int daysShift) {
 		
-		return LocalDate.of(year, month, 1).getDayOfWeek().getValue();
+		return LocalDate.of(year, month, 1).getDayOfWeek().minus(daysShift).getValue();
 	}
 
-	private static void printWeekDays() {
+	private static void printWeekDays(int daysShift) {
 		System.out.print("  ");
 		Arrays.stream(DayOfWeek.values())
-		.forEach(dw -> System.out.printf("%s ", dw.getDisplayName(TextStyle.SHORT, locale)));
+		.map(n -> n.plus(daysShift))
+		.forEachOrdered(dw -> System.out.printf("%s ", dw.getDisplayName(TextStyle.SHORT, locale)));
 		System.out.println();
-		
 	}
 
 	private static void printTitle(int month, int year) {
 		
-		System.out.printf("%s%d, %s\n"," ".repeat(YEAR_OFFSET), year, Month.of(month).getDisplayName(TextStyle.FULL,
-				locale ));
+		System.out.printf(
+				"%s%d, %s\n",
+				" ".repeat(YEAR_OFFSET),
+				year,
+				Month.of(month).getDisplayName(TextStyle.FULL,locale)
+		);
 		
 		
 	}
 
-	private static int[] getMonthYear(String[] args) throws Exception {
+	private static int[] getParsedArguments(String[] args) throws Exception {
 		
-		return args.length == 0 ? getCurrentMonthYear() : getMonthYearArgs(args);
+		return args.length == 0 ? getDefaultArgs() : parseArguments(args);
 	}
 
-	private static int[] getMonthYearArgs(String[] args) throws Exception{
+	private static int[] parseArguments(String[] args) throws Exception{
 		
-		return new int[] {getMonthArgs(args), getYearArgs(args)};
+		return new int[] {getMonthArgs(args), getYearArgs(args), getDayOfWeekArgs(args)};
+	}
+
+	private static int getDayOfWeekArgs(String[] args) throws Exception {
+		int res = DEFAULT_FIRST_DAY_OF_WEEK.getValue();
+		if (args.length > 2) {
+			try {
+				res = DayOfWeek.valueOf(args[2].toUpperCase()).getValue();
+			} catch (IllegalArgumentException e) {
+				throw new Exception("first day of week is incorrect");
+			}
+		}
+		return res;
 	}
 
 	private static int getYearArgs(String[] args) throws Exception{
@@ -113,9 +135,9 @@ public class PrintCalendar {
 		
 	}
 
-	private static int[] getCurrentMonthYear() {
+	private static int[] getDefaultArgs() {
 		LocalDate current = LocalDate.now();
-		return new int[] {current.getMonth().getValue(), current.getYear()};
+		return new int[] {current.getMonth().getValue(), current.getYear(), DEFAULT_FIRST_DAY_OF_WEEK.getValue()};
 	}
 
 }
